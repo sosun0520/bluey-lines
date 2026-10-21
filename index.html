@@ -18,7 +18,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard
 body{min-height:100vh;display:flex;flex-direction:column}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 input,textarea,select{font:inherit}
-.app{flex:1;width:100%;max-width:720px;margin:0 auto;padding:16px 16px 110px}
+.app{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:16px 16px 110px}
 
 /* top */
 .top{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 18px}
@@ -39,6 +39,9 @@ input,textarea,select{font:inherit}
 .media .empty b{display:block;font-size:28px;margin-bottom:6px}
 .photo{aspect-ratio:auto;background:#000}
 .photo img{height:auto;max-height:50vh}
+.media-row{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+.media-row .card{margin:0}
+@media (min-width:760px){.media-row{grid-template-columns:1fr 1fr}.media-row .media{aspect-ratio:16/9;height:100%}.media-row .photo{aspect-ratio:16/9}.media-row .photo img{max-height:none;height:100%}}
 
 /* sentence */
 .sentence{font-size:clamp(19px,4.6vw,25px);font-weight:800;line-height:1.35;letter-spacing:-.01em;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:baseline;min-height:54px}
@@ -104,7 +107,7 @@ input,textarea,select{font:inherit}
 
 /* tabs */
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
-.tabs .inner{display:flex;gap:4px;width:100%;max-width:720px}
+.tabs .inner{display:flex;gap:4px;width:100%;max-width:1100px}
 .tab{flex:1;height:58px;border-radius:16px;font-size:12px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .tab b{font-size:22px}
 .tab.on{background:#eef4ff;color:var(--sky-deep)}
@@ -247,10 +250,10 @@ async function renderToday(){
     ${['월','화','수','목','금'].map((n,i)=>{const x=w.sentences[i];return `<button class="day ${i===cursor?'on':''} ${x&&x.done?'done':''} ${d.getDay()===i+1?'today':''}" onclick="cursor=${i};render()" ${x?'':'disabled'}><span>${n}</span><b>${i+1}</b></button>`;}).join('')}
     <button class="day sat ${d.getDay()===6?'today':''}" onclick="go('test')"><span>토</span><b>테스트</b></button>
   </div>
-  <div class="card" style="padding:10px">
-    <div class="media" id="clipBox"><div class="empty"><b>🎬</b>영상이 아직 없어요<br><small>설정에서 이 문장의 영상을 넣어 주세요</small></div></div>
+  <div class="media-row">
+    <div class="card" style="padding:10px"><div class="media" id="clipBox"><div class="empty"><b>🎬</b>영상이 아직 없어요<br><small>설정에서 이 문장의 영상을 넣어 주세요</small></div></div></div>
+    <div class="card" style="padding:10px"><div class="media photo" id="photoBox" style="display:none"></div></div>
   </div>
-  <div class="card" style="padding:10px"><div class="media photo" id="photoBox" style="display:none"></div></div>
   <div class="card">
     <h2>오늘의 한 문장</h2>
     <div class="sentence" id="sentence"></div>
@@ -268,7 +271,7 @@ async function renderToday(){
   if(cu){$('#clipBox').innerHTML=`<video src="${cu}" controls playsinline preload="metadata"></video>`;}
   const pu=await mediaUrl(s.id+'-photo');
   if(pu){const b=$('#photoBox');b.style.display='';b.innerHTML=`<img src="${pu}" alt="대사 사진">`;}
-  else{$('#photoBox').parentElement.style.display='none';}
+  else{$('#photoBox').parentElement.style.display='none';$('#clipBox').parentElement.style.gridColumn='1 / -1';}
 }
 function head(sub){return `<div class="top"><div><h1>오늘의 한 문장</h1><div class="sub">${sub}</div></div><div class="stars" title="모은 별">${[0,1,2,3,4].map(i=>`<span class="${stars()%5>i||(stars()>0&&stars()%5===0)?'on':''}">★</span>`).join('')}</div></div>`;}
 function drawSentence(){
@@ -306,8 +309,10 @@ function renderTest(){
   if(test.stage==='speak'){renderSpeak(s);return;}
   app.innerHTML=head(`문제 ${test.i+1} / ${test.order.length}`)+`
   <div class="progress"><i style="width:${test.i/test.order.length*100}%"></i></div>
-  <div class="card" style="padding:10px"><div class="media" id="clipBox"><div class="empty"><b>🎬</b>영상 없음</div></div></div>
-  <div class="card" style="padding:10px"><div class="media photo" id="photoBox" style="display:none"></div></div>
+  <div class="media-row">
+    <div class="card" style="padding:10px"><div class="media" id="clipBox"><div class="empty"><b>🎬</b>영상 없음</div></div></div>
+    <div class="card" style="padding:10px"><div class="media photo" id="photoBox" style="display:none"></div></div>
+  </div>
   <div class="card">
     <h2>단어를 순서대로 눌러서 문장을 만들어요</h2>
     <div class="meaning" style="margin:0 0 6px">${esc(s.meaning||'')}</div>
@@ -320,7 +325,7 @@ function renderTest(){
   </div>`;
   drawTest();
   mediaUrl(s.id+'-clip').then(u=>{if(u)$('#clipBox').innerHTML=`<video src="${u}" controls playsinline preload="metadata"></video>`;});
-  mediaUrl(s.id+'-photo').then(u=>{if(u){const b=$('#photoBox');b.style.display='';b.innerHTML=`<img src="${u}">`;}else{$('#photoBox').parentElement.style.display='none';}});
+  mediaUrl(s.id+'-photo').then(u=>{if(u){const b=$('#photoBox');b.style.display='';b.innerHTML=`<img src="${u}">`;}else{$('#photoBox').parentElement.style.display='none';$('#clipBox').parentElement.style.gridColumn='1 / -1';}});
 }
 function startTest(){
   const w=currentWeek();const order=w.sentences.map((_,i)=>i).sort(()=>Math.random()-.5);
